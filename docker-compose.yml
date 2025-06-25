@@ -1,0 +1,70 @@
+services:
+  nginx:
+    image: nginx:alpine
+    restart: always
+    container_name: nginx_container
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - mqtt-broker
+      - iot-data-hub-db
+    network_mode: host
+
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: mqtt_broker_container
+    # command: chmod +x /mosquitto
+    ports:
+      - 1883:1883
+      - 8883:8883
+      - 9002:9001
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+      - ./mosquitto/certs:/mosquitto/certs
+    networks:
+      - mqtt
+
+  iot-data-hub-db:
+    extends:
+      file: ../iot-data-hub/docker-compose.yml
+      service: iot-data-hub-db
+    # container_name: timescaledb_container
+    # image: timescale/timescaledb:latest-pg17
+    # restart: unless-stopped
+    # ports:
+    #   - 5432:5432
+    # environment:
+    #   TIMESCALEDB_TELEMETRY: off
+    #   POSTGRES_DB: timescaledb
+    #   POSTGRES_USER: admin
+    #   POSTGRES_PASSWORD: root
+    #   POSTGRES_HOST_AUTH_METHOD: trust # disable authentication - not for prod
+    #   PGDATA: /data/postgres
+    # networks:
+    #   - postgres
+    # volumes:
+    #   - postgres:/data/postgres
+
+  iot-data-hub:
+    extends:
+      file: ../iot-data-hub/docker-compose.yml
+      service: iot-data-hub
+#     container_name: iot_data_hub_container
+#     depends_on:
+#       - iot-data-hub-db
+    networks:
+      - postgres
+      - mqtt
+
+networks:
+  postgres:
+    driver: bridge
+  mqtt:
+
+volumes:
+  postgres:

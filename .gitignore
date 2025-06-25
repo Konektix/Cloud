@@ -1,0 +1,5 @@
+mosquitto/certs
+mosquitto/log
+mosquitto/data
+
+nginx/logs
