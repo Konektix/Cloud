@@ -1,7 +1,7 @@
 mosquitto/certs
 mosquitto/log
 mosquitto/data
-# mosquitto/config/mosquitto.conf
+mosquitto/config/mosquitto.conf
 
 nginx/logs
 
