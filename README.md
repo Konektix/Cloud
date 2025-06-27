@@ -1,5 +1,10 @@
 # Cloud
 
 ```
-docker-compose -f docker-compose.yml up
+./scripts/start.sh
+```
+optional argument: --env-file
+
+```
+./scripts/stop.sh
 ```

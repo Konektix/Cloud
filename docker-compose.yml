@@ -3,6 +3,7 @@ services:
     image: nginx:alpine
     restart: always
     container_name: nginx_container
+    profiles: ["nginx"]
     ports:
       - 80:80
     volumes:
@@ -16,7 +17,6 @@ services:
   mqtt-broker:
     image: eclipse-mosquitto:2
     container_name: mqtt_broker_container
-    # command: chmod +x /mosquitto
     ports:
       - 1883:1883
       - 8883:8883
@@ -55,8 +55,9 @@ services:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub
 #     container_name: iot_data_hub_container
-#     depends_on:
-#       - iot-data-hub-db
+    depends_on:
+      - iot-data-hub-db
+      - mqtt-broker
     networks:
       - postgres
       - mqtt

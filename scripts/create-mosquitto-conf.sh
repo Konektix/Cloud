@@ -1,0 +1,19 @@
+#!/bin/bash
+
+MOSQUITTO_BASE_CONFIG_FILE_PATH="mosquitto/config/base.conf"
+MOSQUITTO_SSL_LISTENER_CONFIG_FILE_PATH="mosquitto/config/ssl-listener.conf"
+MOSQUITTO_CONFIG_FILE_PATH="mosquitto/config/mosquitto.conf"
+
+if [ -e $MOSQUITTO_CONFIG_FILE_PATH ]
+then
+    rm $MOSQUITTO_CONFIG_FILE_PATH
+fi
+
+cp $MOSQUITTO_BASE_CONFIG_FILE_PATH $MOSQUITTO_CONFIG_FILE_PATH
+
+echo -e "\n" >> $MOSQUITTO_CONFIG_FILE_PATH
+
+if [ $CLOUD_LOCAL != "true" ]
+then
+	cat $MOSQUITTO_SSL_LISTENER_CONFIG_FILE_PATH >> $MOSQUITTO_CONFIG_FILE_PATH
+fi

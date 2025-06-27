@@ -1,5 +1,9 @@
 mosquitto/certs
 mosquitto/log
 mosquitto/data
+# mosquitto/config/mosquitto.conf
 
 nginx/logs
+
+*.env
+!.example.env
