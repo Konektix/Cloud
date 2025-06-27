@@ -23,11 +23,18 @@ do
 
 done;
 
-if [ $CLOUD_LOCAL = "true" ]
+ARGUMENTS="-f docker-compose.yml"
+
+if [ -z "$ENV_FILE" ]
 then
-	ARGUMENTS="-f docker-compose.yml --env-file $ENV_FILE up"
-else
-	ARGUMENTS="-f docker-compose.yml --env-file $ENV_FILE --profile nginx up"
+	ARGUMENTS+=" --env-file $ENV_FILE"
 fi
+
+if [[ $CLOUD_LOCAL != "true" ]]
+then
+	ARGUMENTS+=" --profile nginx"
+fi
+
+ARGUMENTS+=" up"
 
 run_docker_compose $ARGUMENTS

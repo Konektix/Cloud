@@ -21,6 +21,12 @@ ENV_FILE=.env
 
 	done;
 
-	echo "Environemnt variables file: $ENV_FILE"
+echo "Environemnt variables file: $ENV_FILE"
 
-	source ./$ENV_FILE
+if [ -e $ENV_FILE ]
+then
+    source ./$ENV_FILE
+else
+	echo "Environemnt variables file not found: $ENV_FILE"
+fi
+
