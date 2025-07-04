@@ -21,3 +21,25 @@ jobs:
           echo "Service requesting a restart: ${SERVICE}"
         env:
           SERVICE: ${{ inputs.service }}
+
+      - name: Deploy using ssh
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          script: whoami
+          # script: |
+            # cd ~/home/danielwetan/apps/node1
+            # git pull origin master
+            # git status
+            # npm install --only=prod
+            # pm2 restart node1
+            # export NVM_DIR="$HOME/.nvm"
+            # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            # cd ${{ secrets.APP_DIR }} # Specify the path to your app directory on the server
+            # git pull
+            # npm install
+            # npm run build
+            # pm2 restart {service_name} # Replace with your PM2 service name
