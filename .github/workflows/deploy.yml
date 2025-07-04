@@ -19,9 +19,7 @@ jobs:
     steps: 
       - run: |
           echo "Service requesting a restart: ${SERVICE}"
-        env:
-          SERVICE: ${{ inputs.service }}
-
+        
       - name: Deploy using ssh
         uses: appleboy/ssh-action@v1
         with:
