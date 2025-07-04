@@ -34,3 +34,5 @@ jobs:
             cd ~/apps/k/Cloud
             git pull origin main
             echo "Service requesting a restart: ${SERVICE}"
+        env:
+          SERVICE: ${{ inputs.service }}
