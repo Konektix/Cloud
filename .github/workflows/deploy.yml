@@ -18,6 +18,6 @@ jobs:
 
     steps: 
       - run: |
-          echo "Service requesting a restart: $SERVICE"
+          echo "Service requesting a restart: ${SERVICE##/*/}"
         env:
           SERVICE: ${{ inputs.service }}
