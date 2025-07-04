@@ -1,13 +1,23 @@
 name: deploy
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service requesting a deployment'
+        required: false
+        default: 'warning'
+        type: choice
+        options:
+        - iot-data-hub
+        - web-app
 
 jobs:
   main-workflow-job:
     runs-on: ubuntu-latest
 
     steps: 
-      - name: check out repository code
-        uses: actions/checkout@v4
-      - run: echo "This is a test"
-  
+      - run: |
+          echo "Service requesting a restart: $SERVICE"
+        env:
+          SERVICE: ${{ inputs.service }}
