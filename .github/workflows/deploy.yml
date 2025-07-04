@@ -9,6 +9,7 @@ on:
         default: 'warning'
         type: choice
         options:
+        - iot-data-hub
         - Konektix/iot-data-hub
         - Konektix/web-app
 
