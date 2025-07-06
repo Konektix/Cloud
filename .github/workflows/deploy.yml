@@ -18,7 +18,7 @@ jobs:
 
     steps: 
       - run: |
-          echo "Service requesting a restart: ${{ github.event.inputs.service }}"
+          echo "Service requesting a deployment: ${{ github.event.inputs.service }}"
         
       - name: Deploy using ssh
         uses: appleboy/ssh-action@v1
@@ -27,9 +27,8 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           port: 22
-          # script: whoami
           script: |
             cd ~/apps/k/Cloud
             git pull origin main
-            echo "Service requesting a restart: ${{ github.event.inputs.service }}"
+            echo "Service requesting a deployment: ${{ github.event.inputs.service }}"
        
