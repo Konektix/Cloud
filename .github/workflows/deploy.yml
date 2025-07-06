@@ -13,13 +13,10 @@ on:
         - web-app
 
 jobs:
-  main-workflow-job:
+  deploy-via-ssh:
     runs-on: ubuntu-latest
 
     steps: 
-      - run: |
-          echo "Service requesting a deployment: ${{ github.event.inputs.service }}"
-        
       - name: Deploy using ssh
         uses: appleboy/ssh-action@v1
         with:
@@ -28,7 +25,14 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 22
           script: |
+            cd ~/apps/k/${{ github.event.inputs.service }}
+            git status
             cd ~/apps/k/Cloud
-            git pull origin main
+            git status
             echo "Service requesting a deployment: ${{ github.event.inputs.service }}"
+       
+          # script: |
+          #   cd ~/apps/k/Cloud
+          #   git pull origin main
+          #   echo "Service requesting a deployment: ${{ github.event.inputs.service }}"
        
