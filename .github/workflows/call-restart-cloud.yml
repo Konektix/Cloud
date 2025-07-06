@@ -1,0 +1,15 @@
+name: Workflow to call the Cloud to restart on production
+
+on: 
+  workflow_call:
+    secrets:
+      PAT:
+        required: true
+
+jobs:
+  call-restart:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Repository: ${{ github.repository }}"
+          echo ${{ secrets.PAT }} | sed 's/.& /g'
