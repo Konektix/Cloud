@@ -30,7 +30,9 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
-      - ./mosquitto/certs:/mosquitto/certs
+      - /etc/letsencrypt/live/konektix.eu/chain.pem:/mosquitto/certs/chain.pem
+      - /etc/letsencrypt/live/konektix.eu/cert.pem:/mosquitto/certs/cert.pem
+      - /etc/letsencrypt/live/konektix.eu/privkey.pem:/mosquitto/certs/privkey.pem
     networks:
       - mqtt
 
