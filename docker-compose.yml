@@ -14,8 +14,6 @@ services:
       - /etc/letsencrypt/live/konektix.eu/privkey.pem:/etc/nginx/certs/privkey.pem
       - web-app:/apps/web-app
     depends_on:
-      # - mqtt-broker
-      # - iot-data-hub-db
       - web-app
     network_mode: host
 
@@ -30,44 +28,37 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
-      - /etc/letsencrypt/live/konektix.eu/chain.pem:/mosquitto/certs/chain.pem
-      - /etc/letsencrypt/live/konektix.eu/cert.pem:/mosquitto/certs/cert.pem
-      - /etc/letsencrypt/live/konektix.eu/privkey.pem:/mosquitto/certs/privkey.pem
+      - ./mosquitto/certs:/mosquitto/certs
     networks:
-      - mqtt
+      - common_network
 
   iot-data-hub-db:
     extends:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub-db
-    # container_name: timescaledb_container
-    # image: timescale/timescaledb:latest-pg17
-    # restart: unless-stopped
-    # ports:
-    #   - 5432:5432
-    # environment:
-    #   TIMESCALEDB_TELEMETRY: off
-    #   POSTGRES_DB: timescaledb
-    #   POSTGRES_USER: admin
-    #   POSTGRES_PASSWORD: root
-    #   POSTGRES_HOST_AUTH_METHOD: trust # disable authentication - not for prod
-    #   PGDATA: /data/postgres
-    # networks:
-    #   - postgres
-    # volumes:
-    #   - postgres:/data/postgres
+    networks:
+      - common_network
+    environment:
+      TIMESCALEDB_TELEMETRY: off
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_DB: iotDataHubDB
+      POSTGRES_USER: ${IOT_DATA_HUB_DB_USER}
+      POSTGRES_PASSWORD: ${IOT_DATA_HUB_DB_PASSWORD}
+    volumes:
+      - iot_data_hub_db_data:/var/lib/postgresql/data
 
   iot-data-hub:
     extends:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub
-#     container_name: iot_data_hub_container
+    networks:
+      - common_network
+    environment:
+      - postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db:5432/iotDataHubDB
     depends_on:
       - iot-data-hub-db
       - mqtt-broker
-    networks:
-      - postgres
-      - mqtt
+    
   web-app:
     build:
       dockerfile: ../web-app/Dockerfile
@@ -76,10 +67,8 @@ services:
       - web-app:/app/dist
 
 networks:
-  postgres:
-    driver: bridge
-  mqtt:
+  common_network:
 
 volumes:
-  postgres:
+  iot_data_hub_db_data:
   web-app:
