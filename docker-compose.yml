@@ -56,7 +56,7 @@ services:
     networks:
       - common_network
     environment:
-      - postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db:5432/iotDataHubDB
+      - DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db:5432/iotDataHubDB
     depends_on:
       - iot-data-hub-db
       - mqtt-broker
