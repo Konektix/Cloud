@@ -12,7 +12,7 @@ services:
       - ./nginx/logs:/var/log/nginx
       - /etc/letsencrypt/live/konektix.eu/fullchain.pem:/etc/nginx/certs/fullchain.pem
       - /etc/letsencrypt/live/konektix.eu/privkey.pem:/etc/nginx/certs/privkey.pem
-      - web-app:/apps/web-app
+      - web_app:/apps/web-app
     depends_on:
       - web-app
     network_mode: host
@@ -56,7 +56,7 @@ services:
     networks:
       - common_network
     environment:
-      - DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db:5432/iotDataHubDB
+      DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db:5432/iotDataHubDB
     depends_on:
       - iot-data-hub-db
       - mqtt-broker
@@ -79,19 +79,17 @@ services:
     image: quay.io/keycloak/keycloak:26.3
     container_name: keycloak_container
     environment:
-    #   KC_HOSTNAME: localhost
-    #   KC_HOSTNAME_PORT: 8080
-    #   KC_HOSTNAME_STRICT_BACKCHANNEL: false
-    #   KC_HTTP_ENABLED: true
-    #   KC_HOSTNAME_STRICT_HTTPS: false
-    #   KC_HEALTH_ENABLED: true
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db/keycloakDB
       KC_DB_USERNAME: ${KEYCLOAK_POSTGRES_USER}
       KC_DB_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
-    #   KC_PROXY_HEADERS: xforwarded
+      KC_PROXY: edge
+      KC_PROXY_ADDRESS_FORWARDING: true
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     command: ${KEYCLOAK_COMMAND}
     ports:
       - 8080:8080
@@ -100,11 +98,15 @@ services:
       - keycloak-db
     networks:
       - common_network
-    
+
   web-app:
     build:
       dockerfile: ../web-app/Dockerfile
       context: ../web-app
+    environment:
+      VITE_KEYCLOAK_URL: https://keycloak.konektix.eu/
+      VITE_KEYCLOAK_REALM: konektix_realm
+      VITE_KEYCLOAK_CLIENT: client-web-app
     volumes:
       - web_app:/app/dist
 
