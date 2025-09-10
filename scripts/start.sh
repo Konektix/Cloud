@@ -30,9 +30,9 @@ then
 	ARGUMENTS+=" --env-file $ENV_FILE"
 fi
 
-if [[ $CLOUD_LOCAL != "true" ]]
+if [[ $CLOUD_LOCAL = "true" ]]
 then
-	ARGUMENTS+=" --profile nginx"
+	export NGINX_CONF="nginx.local.conf"
 fi
 
 ARGUMENTS+=" up"

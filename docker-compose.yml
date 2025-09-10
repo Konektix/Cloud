@@ -3,19 +3,25 @@ services:
     image: nginx:alpine
     restart: always
     container_name: nginx_container
-    profiles: ["nginx"]
+    # profiles: ["nginx"]
     ports:
       - 80:80
       - 443:443
+      - 81:81
+      - 82:82
+      - 91:91
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/${NGINX_CONF:-nginx.conf}:/etc/nginx/nginx.conf
       - ./nginx/logs:/var/log/nginx
       - /etc/letsencrypt/live/konektix.eu/fullchain.pem:/etc/nginx/certs/fullchain.pem
       - /etc/letsencrypt/live/konektix.eu/privkey.pem:/etc/nginx/certs/privkey.pem
       - web_app:/apps/web-app
     depends_on:
+      - iot-data-hub
+      - hub-manager
       - web-app
-    network_mode: host
+      - pgadmin
+    # network_mode: host
 
   mqtt-broker:
     image: eclipse-mosquitto:2
@@ -24,6 +30,7 @@ services:
       - 1883:1883
       - 8883:8883
       - 9002:9001
+    user: 1883:1883
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
@@ -31,35 +38,8 @@ services:
       - /etc/letsencrypt/live/konektix.eu/chain.pem:/mosquitto/certs/chain.pem
       - /etc/letsencrypt/live/konektix.eu/cert.pem:/mosquitto/certs/cert.pem
       - /etc/letsencrypt/live/konektix.eu/privkey.pem:/mosquitto/certs/privkey.pem
-    networks:
-      - common_network
-
-  iot-data-hub-db:
-    extends:
-      file: ../iot-data-hub/docker-compose.yml
-      service: iot-data-hub-db
-    networks:
-      - common_network
-    environment:
-      TIMESCALEDB_TELEMETRY: off
-      POSTGRES_HOST_AUTH_METHOD: md5
-      POSTGRES_DB: iotDataHubDB
-      POSTGRES_USER: ${IOT_DATA_HUB_DB_USER}
-      POSTGRES_PASSWORD: ${IOT_DATA_HUB_DB_PASSWORD}
-    volumes:
-      - iot_data_hub_db_data:/var/lib/postgresql/data
-
-  iot-data-hub:
-    extends:
-      file: ../iot-data-hub/docker-compose.yml
-      service: iot-data-hub
-    networks:
-      - common_network
-    environment:
-      DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db:5432/iotDataHubDB
-    depends_on:
-      - iot-data-hub-db
-      - mqtt-broker
+    # networks:
+    #   - common_network
 
   keycloak-db:
     image: postgres:17
@@ -70,10 +50,10 @@ services:
       POSTGRES_DB: keycloakDB
       POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
       POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
-    ports:
-      - 5433:5432
-    networks:
-      - common_network
+    # ports:
+    #   - 5433:5432
+    # networks:
+#       - common_network
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.3
@@ -90,14 +70,109 @@ services:
       KC_HTTP_ENABLED: true
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM} # required for keycloak realm initialization
+      KEYCLOAK_IOT_DATA_HUB_SECRET: ${KEYCLOAK_IOT_DATA_HUB_SECRET} # required for keycloak realm initialization
+      KEYCLOAK_HUB_MANAGER_SECRET: ${KEYCLOAK_HUB_MANAGER_SECRET} # required for keycloak realm initialization
+    volumes:
+      - ./scripts/keycloak-config-init.sh:/keycloak-config-init.sh # required for keycloak realm initialization
+    # entrypoint: chmod +x /keycloak-start.sh && sh -c "/keycloak-start.sh"
+    # post_start:
+    #   - command: |
+    #       sh -c "/keycloak-start.sh"
     command: ${KEYCLOAK_COMMAND}
-    ports:
-      - 8080:8080
+    # ports:
+    #   - 8080:8080
     restart: always
     depends_on:
       - keycloak-db
-    networks:
-      - common_network
+    # networks:
+    #   - common_network
+
+#   keycloak-startup:
+#     image: quay.io/keycloak/keycloak:26.3
+#     depends_on:
+#       - keycloak
+#     restart: "no"
+#     volumes:
+#       - ./scripts/keycloak-start.sh:/keycloak-start.sh
+#     entrypoint: chmod +x /keycloak-start.sh && sh -c "/keycloak-start.sh"
+
+  iot-data-hub-db:
+    extends:
+      file: ../iot-data-hub/docker-compose.yml
+      service: iot-data-hub-db
+    # ports:
+    #   - 5433:5432
+    # networks:
+    #   - common_network
+    environment:
+      TIMESCALEDB_TELEMETRY: off
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_DB: iotDataHubDB
+      POSTGRES_USER: ${IOT_DATA_HUB_DB_USER}
+      POSTGRES_PASSWORD: ${IOT_DATA_HUB_DB_PASSWORD}
+    volumes:
+      - iot_data_hub_db_data:/var/lib/postgresql/data
+
+  iot-data-hub:
+    extends:
+      file: ../iot-data-hub/docker-compose.yml
+      service: iot-data-hub
+    # ports:
+    #   - 4000:3000
+    # networks:
+    #   - common_network
+    environment:
+      DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db/iotDataHubDB
+    depends_on:
+      - iot-data-hub-db
+      - mqtt-broker
+
+  hub-manager-db:
+    extends:
+      file: ../hub-manager/docker-compose.yml
+      service: hub-manager-db
+    # ports:
+    #   - 5434:5432
+    # networks:
+    #   - common_network
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_DB: hubManagerDB
+      POSTGRES_USER: ${HUB_MANAGER_DB_USER}
+      POSTGRES_PASSWORD: ${HUB_MANAGER_DB_PASSWORD}
+    volumes:
+      - hub_manager_db_data:/var/lib/postgresql/data
+
+  hub-manager:
+    extends:
+      file: ../hub-manager/docker-compose.yml
+      service: hub-manager
+    # ports:
+    #   - 3000:3000
+    # networks:
+    #   - common_network
+    environment:
+      DATABASE_URL: postgresql://${HUB_MANAGER_DB_USER}:${HUB_MANAGER_DB_PASSWORD}@hub-manager-db/hubManagerDB
+    depends_on:
+      - hub-manager-db
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    # ports:
+    #   - "5050:80"
+    depends_on:
+      - iot-data-hub-db
+      - hub-manager-db
+    # networks:
+    #   - common_network
+    volumes: 
+      - pgadmin:/var/lib/pgadmin
 
   web-app:
     build:
@@ -110,10 +185,12 @@ services:
     volumes:
       - web_app:/app/dist
 
-networks:
-  common_network:
+# networks:
+#   common_network:
 
 volumes:
   iot_data_hub_db_data:
+  hub_manager_db_data:
   keycloak_db_data:
+  pgadmin:
   web_app:
