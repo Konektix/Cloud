@@ -33,6 +33,8 @@ fi
 if [[ $CLOUD_LOCAL = "true" ]]
 then
 	export NGINX_CONF="nginx.local.conf"
+	export KEYCLOAK_COMMAND="start-dev"
+	export VITE_KEYCLOAK_URL="http://localhost:81/"
 fi
 
 ARGUMENTS+=" up"

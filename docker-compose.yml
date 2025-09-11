@@ -80,7 +80,7 @@ services:
     # post_start:
     #   - command: |
     #       sh -c "/keycloak-start.sh"
-    command: ${KEYCLOAK_COMMAND}
+    command: ${KEYCLOAK_COMMAND:-start}
     # ports:
     #   - 8080:8080
     restart: always
@@ -180,7 +180,7 @@ services:
       dockerfile: ../web-app/Dockerfile
       context: ../web-app
     environment:
-      VITE_KEYCLOAK_URL: https://keycloak.konektix.eu/
+      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://keycloak.konektix.eu/} # http://localhost:81/ # https://keycloak.konektix.eu/
       VITE_KEYCLOAK_REALM: konektix_realm
       VITE_KEYCLOAK_CLIENT: client-web-app
     volumes:
