@@ -3,13 +3,11 @@ services:
     image: nginx:alpine
     restart: always
     container_name: nginx_container
-    # profiles: ["nginx"]
     ports:
       - 80:80
       - 443:443
       - 81:81
       - 82:82
-      - 91:91
     volumes:
       - ./nginx/${NGINX_CONF:-nginx.conf}:/etc/nginx/nginx.conf
       - ./nginx/logs:/var/log/nginx
@@ -21,7 +19,6 @@ services:
       - hub-manager
       - web-app
       - pgadmin
-    # network_mode: host
 
   mqtt-broker:
     image: eclipse-mosquitto:2
@@ -38,8 +35,6 @@ services:
       - /etc/letsencrypt/live/konektix.eu/chain.pem:/mosquitto/certs/chain.pem
       - /etc/letsencrypt/live/konektix.eu/cert.pem:/mosquitto/certs/cert.pem
       - /etc/letsencrypt/live/konektix.eu/privkey.pem:/mosquitto/certs/privkey.pem
-    # networks:
-    #   - common_network
 
   keycloak-db:
     image: postgres:17
@@ -50,10 +45,6 @@ services:
       POSTGRES_DB: keycloakDB
       POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
       POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
-    # ports:
-    #   - 5433:5432
-    # networks:
-#       - common_network
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.3
@@ -76,36 +67,15 @@ services:
       KEYCLOAK_HUB_MANAGER_SECRET: ${KEYCLOAK_HUB_MANAGER_SECRET} # required for keycloak realm initialization
     volumes:
       - ./scripts/keycloak-config-init.sh:/keycloak-config-init.sh # required for keycloak realm initialization
-    # entrypoint: chmod +x /keycloak-start.sh && sh -c "/keycloak-start.sh"
-    # post_start:
-    #   - command: |
-    #       sh -c "/keycloak-start.sh"
     command: ${KEYCLOAK_COMMAND:-start}
-    # ports:
-    #   - 8080:8080
     restart: always
     depends_on:
       - keycloak-db
-    # networks:
-    #   - common_network
-
-#   keycloak-startup:
-#     image: quay.io/keycloak/keycloak:26.3
-#     depends_on:
-#       - keycloak
-#     restart: "no"
-#     volumes:
-#       - ./scripts/keycloak-start.sh:/keycloak-start.sh
-#     entrypoint: chmod +x /keycloak-start.sh && sh -c "/keycloak-start.sh"
 
   iot-data-hub-db:
     extends:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub-db
-    # ports:
-    #   - 5433:5432
-    # networks:
-    #   - common_network
     environment:
       TIMESCALEDB_TELEMETRY: off
       POSTGRES_HOST_AUTH_METHOD: md5
@@ -119,10 +89,6 @@ services:
     extends:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub
-    # ports:
-    #   - 4000:3000
-    # networks:
-    #   - common_network
     environment:
       DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db/iotDataHubDB
     depends_on:
@@ -133,10 +99,6 @@ services:
     extends:
       file: ../hub-manager/docker-compose.yml
       service: hub-manager-db
-    # ports:
-    #   - 5434:5432
-    # networks:
-    #   - common_network
     environment:
       POSTGRES_HOST_AUTH_METHOD: md5
       POSTGRES_DB: hubManagerDB
@@ -149,10 +111,6 @@ services:
     extends:
       file: ../hub-manager/docker-compose.yml
       service: hub-manager
-    # ports:
-    #   - 3000:3000
-    # networks:
-    #   - common_network
     environment:
       DATABASE_URL: postgresql://${HUB_MANAGER_DB_USER}:${HUB_MANAGER_DB_PASSWORD}@hub-manager-db/hubManagerDB
     depends_on:
@@ -165,13 +123,9 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-    # ports:
-    #   - "5050:80"
     depends_on:
       - iot-data-hub-db
       - hub-manager-db
-    # networks:
-    #   - common_network
     volumes: 
       - pgadmin:/var/lib/pgadmin
 
@@ -180,14 +134,11 @@ services:
       dockerfile: ../web-app/Dockerfile
       context: ../web-app
     environment:
-      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://keycloak.konektix.eu/} # http://localhost:81/ # https://keycloak.konektix.eu/
+      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://keycloak.konektix.eu/}
       VITE_KEYCLOAK_REALM: konektix_realm
       VITE_KEYCLOAK_CLIENT: client-web-app
     volumes:
       - web_app:/app/dist
-
-# networks:
-#   common_network:
 
 volumes:
   iot_data_hub_db_data:
