@@ -75,16 +75,19 @@ services:
     depends_on:
       - keycloak-db
     healthcheck: # check when 8080 port is reserved on the container
-      test: cat /proc/net/tcp6 | grep '00000000000000000000000000000000:1F90 00000000000000000000000000000000:0000' || exit 1
-      interval: 5s
-      timeout: 2s
-      retries: 20
-      start_period: 120s
+#      test: cat /proc/net/tcp6 | grep '00000000000000000000000000000000:1F90 00000000000000000000000000000000:0000' || exit 1
+#      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost:9000\r\nConnection: close\r\n\r\n' >&3;cat <&3 | grep -q '\"status\": \"UP\"' && exit 0 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+#      start_period: 120s
 
-  iot-data-hub-db:
+  iot-data-hub-db-extended:
     extends:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub-db
+    ports: !reset []
     environment:
       TIMESCALEDB_TELEMETRY: off
       POSTGRES_HOST_AUTH_METHOD: md5
@@ -99,20 +102,19 @@ services:
       file: ../iot-data-hub/docker-compose.yml
       service: iot-data-hub
     environment:
-      DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db/iotDataHubDB
+      DATABASE_URL: postgresql://${IOT_DATA_HUB_DB_USER}:${IOT_DATA_HUB_DB_PASSWORD}@iot-data-hub-db-extended/iotDataHubDB
       KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://keycloak.konektix.eu/}
       KEYCLOAK_CLIENT: iot-data-hub
       KEYCLOAK_SECRET: ${KEYCLOAK_IOT_DATA_HUB_SECRET}
       KEYCLOAK_REALM: konektix_realm
 
-    depends_on:
+    depends_on: !override
       # - iot-data-hub-db
       # - mqtt-broker
       keycloak:
         condition: service_healthy
-        
 
-  hub-manager-db:
+  hub-manager-db-extended:
     extends:
       file: ../hub-manager/docker-compose.yml
       service: hub-manager-db
@@ -129,12 +131,12 @@ services:
       file: ../hub-manager/docker-compose.yml
       service: hub-manager
     environment:
-      DATABASE_URL: postgresql://${HUB_MANAGER_DB_USER}:${HUB_MANAGER_DB_PASSWORD}@hub-manager-db/hubManagerDB
+      DATABASE_URL: postgresql://${HUB_MANAGER_DB_USER}:${HUB_MANAGER_DB_PASSWORD}@hub-manager-db-extended/hubManagerDB
       KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://keycloak.konektix.eu/}
       KEYCLOAK_CLIENT: hub-manager
       KEYCLOAK_SECRET: ${KEYCLOAK_HUB_MANAGER_SECRET}
       KEYCLOAK_REALM: konektix_realm
-    depends_on:
+    depends_on: !override
       # - hub-manager-db
       keycloak:
         condition: service_healthy
@@ -147,9 +149,9 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     depends_on:
-      - iot-data-hub-db
-      - hub-manager-db
-    volumes: 
+      - iot-data-hub-db-extended
+      - hub-manager-db-extended
+    volumes:
       - pgadmin:/var/lib/pgadmin
 
   web-app:
