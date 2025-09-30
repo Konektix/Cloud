@@ -35,6 +35,9 @@ then
 	export NGINX_CONF="nginx.local.conf"
 	export KEYCLOAK_COMMAND="start-dev"
 	export VITE_KEYCLOAK_URL="http://localhost:81/"
+	export API_URL="http://localhost:80"
+else
+	export API_URL="https://api.konektix.eu"
 fi
 
 ARGUMENTS+=" up"

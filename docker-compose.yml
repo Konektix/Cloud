@@ -159,6 +159,7 @@ services:
       dockerfile: ../web-app/Dockerfile
       context: ../web-app
     environment:
+      VITE_API_URL: ${API_URL}
       VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-https://keycloak.konektix.eu/}
       VITE_KEYCLOAK_REALM: konektix_realm
       VITE_KEYCLOAK_CLIENT: client-web-app
